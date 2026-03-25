@@ -213,7 +213,6 @@
             #final-view { display: block !important; padding: 0; margin: 0; }
             #final-gallery { display: block !important; padding: 0; margin: 0; gap: 0; background: transparent !important; }
             
-            /* 強制設定列印頁面為 16:9 比例 (橫向) */
             @page { size: 16in 9in; margin: 0; }
             
             .slide-container {
@@ -299,7 +298,7 @@
             <div class="preview-panel">
                 <div id="ppt-preview" class="slide-container theme-office">
                     <div id="ppt-title" class="slide-title">標題載入中</div>
-                    <div class="slide-body-wrapper">
+                    <div class="slide-body-wrapper" id="ppt-body-wrapper">
                         <div id="ppt-content" class="slide-content">內容載入中</div>
                         <img id="ppt-img-preview" class="slide-uploaded-img" src="" alt="圖片預覽">
                     </div>
@@ -313,7 +312,7 @@
                 <div class="reference-area no-print">
                     <h3 style="margin-top: 0; color: #d35400; font-size: 18px;">📚 輔助資源</h3>
                     <div class="btn-group">
-                        <button class="btn-lock" onclick="askUnlock()">🔒 教師解鎖示範</button>
+                        <button id="btn-unlock-demo" class="btn-lock" onclick="askUnlock()">🔒 教師解鎖示範</button>
                     </div>
                     <div id="step-hint-box" style="margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; border: 1px dashed #f39c12;">
                         <strong style="color:#d35400;">💡 思考引導：</strong> <span id="hint-text" style="color: #c0392b; font-weight: bold; display: block; margin-top: 8px;"></span>
@@ -357,12 +356,21 @@
 function speakMandarin(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel(); 
-        const utterance = new SpeechSynthesisUtterance(text);
+        // 自動移除 HTML 標籤，確保語音功能不受影響
+        const cleanText = text.replace(/<[^>]*>?/gm, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'zh-CN'; 
         utterance.rate = 1; 
         window.speechSynthesis.speak(utterance);
     } else {
         alert("您的瀏覽器不支持語音朗讀功能。");
+    }
+}
+
+// 用於安全觸發朗讀的代理函數
+function speakDemoMandarin(index) {
+    if (demoSpeechData[index]) {
+        speakMandarin(demoSpeechData[index]);
     }
 }
 
@@ -386,22 +394,22 @@ const demoStepsData = [
     { title: "步驟四：活動整體規劃", q: "我們將如何串聯團隊優勢與服務對象的需求？", i: "針對三大需求設計全日活動；結合專業知識提供適切支援。" },
     { title: "步驟五：重點活動 (一)", q: "針對「生活自理能力」，有什麼具體活動？", i: "『智多星』健康生活問與答；利用專業老年學知識，通過趣味問答和認知訓練遊戲；預防認知障礙，提升生活自理能力。" },
     { title: "步驟六：重點活動 (二)", q: "針對「社交與心理」，有什麼具體活動？", i: "『心連心』社區午餐會；利用優秀溝通技巧，在輕鬆愉快氛圍中打破社交孤立；建立朋輩互助網絡，改善心理健康。" },
-    { title: "步驟七：重點活動 (三)", q: "針對「家居安全」，有什麼具體活動？", i: "『安居寶』家居安全樂園；發揮「資源連結與評估能力」，教導防跌知識；即場進行「家居安全風險初步評估」並轉介維修津貼。" },
+    { title: "步驟七：重點活動 (三)", q: "針對「家居安全」，有什麼具體活動？", i: "『安居寶』家居安全樂園；發揮「資源連結與評估能力」，教導防跌知識；即場進行「家居安全風險初步評估」並協助長者申請維修津貼。" },
     { title: "步驟八：總結與呼籲", q: "最後如何簡潔有力地總結並爭取經理支持？", i: "發揮員工專業；改善獨居長者生活；展現集團社會責任決心；希望經理採納建議。" }
 ];
 
 const demoSpeechData = [
-    "張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象。",
-    "從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括生活自理能力下降、社交孤立問題，以及家居環境的安全風險。",
-    "我們的員工都具備專業資格，擅長評估長者身心狀況、建立信任關係，並擁有豐富的社區資源連結經驗。這使我們能夠提供真正適切的支援。",
+    "張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style=\"color:#d35400; font-weight:bold;\">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。",
+    "從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style=\"color:#c0392b; font-weight:bold;\">生活自理能力下降、社交孤立問題，以及家居環境的安全風險</span>。",
+    "我們的員工都<span style=\"color:#27ae60; font-weight:bold;\">具備社工專業資格，擅長評估長者身心狀況、建立信任關係，並擁有豐富的社區資源連結經驗</span>。這使我們能夠提供適切的支援。",
     "針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：",
-    "活動一『智多星』健康生活問與答，將利用我們員工的專業老年學知識，通過趣味問答和認知訓練遊戲，幫助長者學習實用的健康資訊，同時鍛煉大腦，預防認知障礙，提升他們的生活自理能力。",
-    "活動二『心連心』社區午餐會，將利用員工優秀的溝通技巧，在輕鬆愉快的工作氛圍中，打破獨居長者的社交孤立。我們將建立一個朋輩互助網絡，讓他們感受到社區的關懷和支持，顯著改善心理健康狀況。",
-    "活動三『安居寶』家居安全樂園，將發揮社工的「資源連結與評估能力」。不僅透過講座教導實用的防跌倒知識，社工更會即場為長者進行一對一的「家居安全風險初步評估」。如果發現長者家中有潛在隱患（例如缺乏扶手或照明不足），社工會直接為他們登記，並轉介合適的社區資源或長者維修津貼，從根本上解決居住安全問題。",
+    "活動一『智多星』健康生活問與答，將<span style=\"color:#8e2de2; font-weight:bold;\">利用我們員工的專業老年學知識</span>，通過趣味問答和認知訓練遊戲，<span style=\"color:#2980b9; font-weight:bold;\">幫助長者學習實用的健康資訊，同時鍛煉大腦，預防認知障礙，提升他們的生活自理能力</span>。",
+    "活動二『心連心』社區午餐會，將<span style=\"color:#8e2de2; font-weight:bold;\">利用員工優秀的溝通技巧</span>，在輕鬆愉快的氛圍中，打破獨居長者的社交孤立。我們將<span style=\"color:#2980b9; font-weight:bold;\">建立一個朋輩互助網絡，讓他們感受到社區的關懷和支持，顯著改善心理健康狀況</span>。",
+    "活動三『安居寶』家居安全樂園，將<span style=\"color:#8e2de2; font-weight:bold;\">發揮社工的「資源連結與評估能力」</span>。通過講座教導實用的防跌倒知識，社工更會<span style=\"color:#2980b9; font-weight:bold;\">即場為長者進行一對一的「家居安全風險初步評估」。如果發現長者家中有潛在隱患（例如缺乏扶手或照明不足），社工會直接為他們登記，並轉介合適的社區資源或協助長者申請維修津貼，從根本上解決居住安全問題</span>。",
     "總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！"
 ];
 
-/* --- IVE 8大專業學科 + 自由創作 數據 --- */
+/* --- IVE 8大專業學科 + 自由創作 數據與講稿 --- */
 const industries = {
     "健康及生命科學": { 
         icon: "🔬", defaultTheme: "theme-nature",
@@ -431,7 +439,8 @@ const industries = {
             "活動二將由配藥員主理，解答基層市民日常用藥與營養補充的疑難，傳遞正確保健知識。",
             "活動三將推廣低成本的家居環境衞生小貼士，改善他們的居住質素與傳染病防護能力。",
             "這項支援活動不僅能發揮我們的科學專長造福社區，更能凸顯集團重視大眾健康的形象，懇請您批准。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">對慢性病管理認知不足、健康數據缺乏監測，以及居家服藥的安全隱患</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備醫護與化驗科學專業資格，擅長操作健康檢測儀器、解讀健康數據，並擁有豐富的藥理知識</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『健康守護站』基礎指標快測，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工的檢測專長</span>，為長者進行血壓及血糖等基本健康指標測試，<span style="color:#2980b9; font-weight:bold;">幫助長者了解自身狀況，及早發現潛在的健康風險</span>。<br>活動二『用藥小百科』健康講座，將<span style="color:#8e2de2; font-weight:bold;">利用配藥員的專業知識</span>，在輕鬆愉快的氛圍中，教導長者如何正確存放藥物、識別過期藥品，<span style="color:#2980b9; font-weight:bold;">糾正錯誤的用藥觀念，改善健康管理能力</span>。<br>活動三『養生錦囊』健康物資派發與示範，將<span style="color:#8e2de2; font-weight:bold;">發揮團隊的「健康應用能力」</span>。我們不僅會派發包含藥盒、無糖健康食品及消毒用品的福袋，員工更會即場示範如何使用七天分類藥盒，並陪同長者將當天藥物正確分類，<span style="color:#2980b9; font-weight:bold;">將健康支援落實到具體行動中</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "商業": { 
         icon: "💼", defaultTheme: "theme-office",
@@ -462,7 +471,8 @@ const industries = {
             "活動二將邀請市場部同事分享數碼營銷趨勢，教導他們如何包裝自己，建立具競爭力的「個人品牌」。",
             "活動三由 HR 團隊主持模擬面試，提供一對一的履歷修改與求職策略指導，增強他們的自信。",
             "這項活動能將我們的商業專業回饋社會，切實協助弱勢青年向上流動，希望您能全力支持。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">防騙意識薄弱、日常開支管理困難，以及缺乏消費規劃的求助渠道</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備金融及會計專業資格，擅長財務風險分析、預算規劃，並擁有敏銳的市場觸覺</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『防騙金鐘罩』實戰問答，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工對金融騙案的專業了解</span>，通過模擬電話騙案和趣味問答，<span style="color:#2980b9; font-weight:bold;">幫助長者學習識別最新的詐騙手法，提升他們保護個人財產的能力</span>。<br>活動二『理財同樂日』社區茶座，將<span style="color:#8e2de2; font-weight:bold;">利用員工優秀的溝通技巧</span>，在輕鬆愉快的氛圍中，用淺白語言分享日常慳錢及預算管理的小貼士。我們將<span style="color:#2980b9; font-weight:bold;">帶動長者互相交流消費心得，打破社交孤立</span>。<br>活動三『愛心小市集』模擬購物體驗，將<span style="color:#8e2de2; font-weight:bold;">發揮團隊的「預算策劃與營銷能力」</span>。我們會佈置一個小型生活超市，派發活動代金券，由員工陪伴長者進行模擬採購。這不僅能<span style="color:#2980b9; font-weight:bold;">讓長者換取實用的米油麵等物資，更能讓他們在互動中實踐精明消費的原則</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "幼兒、長者及社會服務": { 
         icon: "👨‍👩‍👧‍👦", defaultTheme: "theme-edu",
@@ -491,7 +501,8 @@ const industries = {
             "活動二特設「照顧者減壓茶座」，由社工帶領分享，幫助弱勢家長或長者紓解壓力並建立互助網絡。",
             "活動三將提供「社區資源導航」，即場解答綜援或其他福利申請疑問，並轉介合適的物資支援。",
             "這次活動能將我們的社福專業轉化為實質的安全網，減輕弱勢家庭的重擔，希望能爭取到撥款支持。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">身體機能逐漸衰退、缺乏娛樂互動，以及與社會脫節產生的孤獨感</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備安老服務專業資格，擅長掌握長者生理及心理特點、設計無障礙遊戲，並擁有豐富的帶領活動經驗</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『動感活力營』體適能遊戲，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工的老年人體工學知識</span>，通過拋接軟球、伸展毛巾操等低強度運動，<span style="color:#2980b9; font-weight:bold;">幫助長者舒展筋骨，同時鍛煉手眼協調，延緩身體機能衰退</span>。<br>活動二『想當年』懷舊金曲分享會，將<span style="color:#8e2de2; font-weight:bold;">利用員工帶動氣氛的技巧</span>，在輕鬆愉快的氛圍中，播放經典老歌並鼓勵長者分享昔日故事。<span style="color:#2980b9; font-weight:bold;">這能有效打破獨居長者的社交孤立，顯著改善心理健康狀況</span>。<br>活動三『銀髮互助網』社區結伴計劃，將<span style="color:#8e2de2; font-weight:bold;">發揮員工的「社區組織與網絡建立能力」</span>。我們會邀請區內活躍的長者義工參與，將他們與獨居長者配對成「社區好夥伴」。透過共同參與簡單的園藝或手工製作，<span style="color:#2980b9; font-weight:bold;">為他們建立長遠的友誼橋樑，讓獨居長者日後也有伴同行</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "設計創作": { 
         icon: "🎨", defaultTheme: "theme-design",
@@ -521,7 +532,8 @@ const industries = {
             "活動二為「舊衣改造教學」，由設計團隊親自指導他們將舊衣物重新剪裁，既環保又能減輕生活負擔。",
             "活動三將設立「多媒體作品展示牆」，運用動畫及光影設計對外展示他們的創作，提升社會對弱勢群體的認同。",
             "這次活動能展現我們設計團隊的社會責任感，透過創意賦予弱勢社群自信，希望您能批准。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">家居環境陳舊欠缺活力、空間佈局雜亂阻礙活動，以及缺乏無障礙設計帶來的跌倒風險</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備室內與空間設計專業資格，擅長實用美學設計、人體工學佈局，並擁有豐富的空間改造經驗</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『巧手換新裝』舊物改造工作坊，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工的創意美學知識</span>，通過教導長者將家中廢舊布料或膠樽改造成實用收納盒，<span style="color:#2980b9; font-weight:bold;">幫助長者美化家居，同時鍛煉動手能力，提升生活成就感</span>。<br>活動二『色彩點亮生活』分享會，將<span style="color:#8e2de2; font-weight:bold;">利用員工的視覺傳達技巧</span>，在輕鬆愉快的氛圍中，用圖片向長者展示如何透過改變窗簾或床單顏色來改善家居採光與心情。<span style="color:#2980b9; font-weight:bold;">這能促進長者間的美學交流，打破社交孤立</span>。<br>活動三『溫馨空間』家居美化大行動，將<span style="color:#8e2de2; font-weight:bold;">發揮設計師的「實用美學與空間優化能力」</span>。員工會利用鮮明的高對比色防滑膠條和發光貼紙，帶領長者製作專屬的「開關指示牌」與「防撞警示貼」。<span style="color:#2980b9; font-weight:bold;">這不僅是一項藝術創作，帶回家貼上後更能直接提升居室的安全與便利性</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "工程": { 
         icon: "🚧", defaultTheme: "theme-construction",
@@ -551,7 +563,8 @@ const industries = {
             "活動二將在浴室及走廊「免費加裝防滑地磚及強力扶手」，從工程力學角度確保穩固，預防致命跌倒。",
             "活動三我們將為他們進行「基本水電急修」，解決如水管漏水或光管損壞等困擾他們多時的日常問題。",
             "這項支援計劃能運用我們的硬技術解決弱勢社群最迫切的居住痛點，充分體現集團回饋社會的精神。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">家居水電設施老化、缺乏可靠的維修渠道，以及潛在的機電危險（如漏電或火警風險）</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備機電工程專業資格，擅長水電設備維修、機電安全檢測，並擁有豐富的屋宇裝備評估經驗</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『安全大考驗』機電常識問答，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工的工程專業知識</span>，通過實物展示和趣味問答，<span style="color:#2980b9; font-weight:bold;">幫助長者學習識別老化的插座、拖板及漏水的喉管，提升他們的居家安全防護意識</span>。<br>活動二『節能小嚮導』社區茶座，將<span style="color:#8e2de2; font-weight:bold;">利用員工的實務經驗分享</span>，在輕鬆愉快的氛圍中，教導長者如何安全使用家庭電器及節省水電費。我們將<span style="color:#2980b9; font-weight:bold;">帶動長者互相交流生活智慧，打破社交孤立</span>。<br>活動三『安居守護者』照明與防跌改善工程，將<span style="color:#8e2de2; font-weight:bold;">發揮工程人員的「硬件安裝與問題解決能力」</span>。針對獨居長者夜間如廁跌倒的高危問題，我們的義工隊會直接上門，為有需要的長者免費安裝即插即用的智能感應夜燈，以及浴室防滑墊，<span style="color:#2980b9; font-weight:bold;">以最直接的工程技術消除居住隱患</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "酒店及旅遊": { 
         icon: "✈️", defaultTheme: "theme-catering",
@@ -581,7 +594,8 @@ const industries = {
             "活動二為「星級餐桌體驗」，我們的服務團隊將為他們提供專業的款待，讓他們感受社會的尊重與關懷。",
             "活動三將融入「本地旅遊導賞元素」，在宴會廳設置特色佈景，為鮮少外出的弱勢群體提供休閒微旅行的感覺。",
             "這次活動能將我們酒店「以客為尊」的服務理念轉化為對弱勢社群的實質關懷，希望您能全力支持。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">缺乏優質的餐飲體驗、甚少機會外出休閒娛樂，以及渴望在社交中獲得尊重的互動</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備酒店及餐飲管理專業資格，擅長五星級款待服務、宴會統籌，並擁有豐富的客務溝通經驗</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『星級款待』餐桌禮儀體驗，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工的高級餐飲服務知識</span>，通過為長者鋪設精美餐桌並示範酒店級款待，<span style="color:#2980b9; font-weight:bold;">幫助長者體驗尊貴的用餐氛圍，提升他們的自信心與生活品味</span>。<br>活動二『美味同享』健康點心工作坊，將<span style="color:#8e2de2; font-weight:bold;">利用員工優秀的餐飲指導技巧</span>，在輕鬆愉快的氛圍中，教導長者製作簡單健康的酒店級點心。我們將<span style="color:#2980b9; font-weight:bold;">建立一個共食同樂的網絡，讓他們感受到被尊重與關懷，顯著改善心理健康狀況</span>。<br>活動三『暖心微旅行』酒店無障礙導賞，將<span style="color:#8e2de2; font-weight:bold;">發揮團隊的「款待策劃與活動統籌能力」</span>。我們會安排專車接送長者，由員工親自帶領他們參觀酒店的藝術裝置或特色宴會廳，最後以一場精緻的下午茶作結。<span style="color:#2980b9; font-weight:bold;">這能讓平日鮮少外出的長者，享受一趟安全又充滿驚喜的高品質微旅行</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "資訊科技": { 
         icon: "💻", defaultTheme: "theme-tech",
@@ -611,7 +625,8 @@ const industries = {
             "活動二將安排 IT 同事一對一指導他們安全下載及使用常用的醫療與政府福利申請應用程式，跨越數碼鴻溝。",
             "活動三特設「手機安全健檢站」，協助他們清理潛在的惡意軟件並安裝攔截詐騙電話的程式。",
             "這項活動能發揮我們的科技專長，切實保護弱勢社群免受網絡威脅，展現公司的科技向善理念，懇請支持。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">嚴重的數碼鴻溝（不懂使用智能手機）、極易成為網絡詐騙的受害者，以及缺乏透過線上工具與外界聯繫的能力</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備資訊科技專業資格，擅長軟硬件操作、網絡安全防護，並擁有耐心解答技術疑難的經驗</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『指尖連世界』智能手機教學，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工的軟件應用知識</span>，通過一對一的耐心指導，<span style="color:#2980b9; font-weight:bold;">幫助長者學習使用視像通話、字體放大及語音輸入等實用功能，跨越科技障礙，提升他們的數碼自理能力</span>。<br>活動二『防騙守門員』網絡安全茶座，將<span style="color:#8e2de2; font-weight:bold;">利用員工的網絡防護經驗</span>，在輕鬆愉快的氛圍中，以真實案例拆解最新的假冒短訊及視像騙案。我們將<span style="color:#2980b9; font-weight:bold;">帶動長者互相分享防騙心得，打破社交孤立，改善對科技的恐懼感</span>。<br>活動三『長者數碼小幫手』實用程式設定，將<span style="color:#8e2de2; font-weight:bold;">發揮 IT 人員的「系統配置與技術支援能力」</span>。我們會協助長者清理手機內的惡意軟件，並即場幫他們安裝攔截詐騙來電的應用程式。此外，我們更會為他們設定「緊急求救（SOS）」快捷鍵，<span style="color:#2980b9; font-weight:bold;">用科技為他們編織一張看不見的護流網</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "跨學科課程": { 
         icon: "🌐", defaultTheme: "theme-minimalist",
@@ -640,7 +655,8 @@ const industries = {
             "活動二為「VR 虛擬探索」，讓平日因經濟或身體條件受限的弱勢群體，能身歷其境地體驗海外風景，開闊視野。",
             "活動三將舉辦「跨界別生活改善講座」，從科技防騙、家居設計與健康科學多角度為他們提供實用建議。",
             "這次企劃證明了跨學科合作能帶來突破性的支援服務，為弱勢社群帶來尊嚴與歡樂，希望能爭取到跨部門的支持。"
-        ]
+        ],
+        demoHTML: `張經理，您好！關於我們計劃舉辦的「關懷獨居長者日」支援活動，我已做好了計劃，現在給您匯報一下。我們舉辦這個活動，是想<span style="color:#d35400; font-weight:bold;">向弱勢群體傳達關懷和溫暖，提升他們的生活質量，並藉此履行社會責任，樹立良好的企業形象</span>。<br><br>從我收集的資料來看，獨居長者主要在三個方面需要我們關注：包括<span style="color:#c0392b; font-weight:bold;">精神生活單調、因行動不便難以遠行，以及缺乏新鮮的感官刺激</span>。我們的員工都<span style="color:#27ae60; font-weight:bold;">具備結合設計與資訊科技的跨領域專業資格，擅長虛擬實境（VR）操作、互動光影設計，並擁有創造沉浸式體驗的豐富經驗</span>。這使我們能夠提供適切的支援。<br><br>針對這些需求，我設計了三個能幫助獨居長者的活動，下面向您說明：<br><br>活動一『感官新視界』互動光影體驗，將<span style="color:#8e2de2; font-weight:bold;">利用我們員工的編程與視覺設計知識</span>，通過設置動作感測投影牆，讓長者揮動雙手就能在牆上畫出花朵，<span style="color:#2980b9; font-weight:bold;">為他們帶來新奇的感官刺激，提升生活樂趣</span>。<br>活動二『虛擬任意門』VR 旅行分享會，將<span style="color:#8e2de2; font-weight:bold;">利用員工操作虛擬實境設備的技巧</span>，在輕鬆愉快的氛圍中，讓長者戴上 VR 眼鏡「暢遊」世界各地名勝。我們將<span style="color:#2980b9; font-weight:bold;">鼓勵長者除下眼鏡後互相分享「旅行」感受，打破獨居長者的社交孤立</span>。<br>活動三『數碼時光機』回憶重塑展覽，將<span style="color:#8e2de2; font-weight:bold;">發揮團隊的「多媒體創作與科技應用能力」</span>。我們會邀請長者帶來舊的黑白照片，利用 AI 技術即場為照片修復及上色，甚至將照片變成簡單的動態影片。<span style="color:#2980b9; font-weight:bold;">這份滿載回憶的數碼禮物，能為長者帶來極大的精神慰藉與感動</span>。<br><br>總結來說，這次的「關懷獨居長者」活動，既能發揮員工的專業，改善獨居長者的生活，更能充分展現集團履行社會責任的決心，建立正面的企業形象。希望經理能考慮並採納這項活動建議，謝謝！`
     },
     "自由創作 (不限學科)": { 
         icon: "✨", defaultTheme: "theme-minimalist",
@@ -668,7 +684,8 @@ const industries = {
             "活動二將安排小組交流與技能分享，幫助他們建立自信與社區互助網絡。",
             "活動三特設諮詢與資源配對站，提供一對一的指導並為他們轉介長遠的後續資源。",
             "這項原創活動不僅能切實改善他們的生活，更能展現集團勇於創新並回饋社會的決心，懇請批准。"
-        ]
+        ],
+        demoHTML: `` // 自由創作不需要教師解鎖示範
     }
 };
 
@@ -690,7 +707,6 @@ function init() {
         }
     });
     
-    // 獨立渲染「自由創作」選項，讓它視覺上更突出
     if (industries["自由創作 (不限學科)"]) {
         list.innerHTML += `
             <div class="industry-item special-item" onclick="startExercise('自由創作 (不限學科)')">
@@ -708,7 +724,6 @@ function init() {
 function renderGallery(containerId) {
     const container = document.getElementById(containerId);
     let html = '';
-    // 使用 P1 到 P11 的圖片資源
     for(let i=1; i<=11; i++) {
         html += `<img src="P${i}.jpg" class="zoomable" onclick="openImageModal(this.src)" title="點擊放大參考" onerror="this.style.display='none'">`;
     }
@@ -759,8 +774,8 @@ function switchTab(btn, type, index) {
     } else if (type === 'c') {
         const textToSpeak = demoSpeechData[index];
         contentDiv.innerHTML = `
-            <div style="color: #2c3e50; font-size: 17px; margin-bottom: 15px;">${textToSpeak}</div>
-            <button class="btn-tts" onclick="speakMandarin('${textToSpeak}')">🔊 普通話發音</button>
+            <div style="color: #2c3e50; font-size: 17px; margin-bottom: 15px; line-height: 1.8;">${textToSpeak}</div>
+            <button class="btn-tts-small" style="font-size:14px; padding: 10px 20px;" onclick="speakDemoMandarin(${index})">🔊 普通話發音</button>
         `;
     }
 }
@@ -779,18 +794,21 @@ function startExercise(name) {
     
     document.getElementById('theme-style').value = industries[name].defaultTheme;
 
+    // 自由空間隱藏教師解鎖按鈕
+    document.getElementById('btn-unlock-demo').style.display = (name === "自由創作 (不限學科)") ? 'none' : 'inline-block';
+
     const savedRaw = localStorage.getItem(`ppt_support_event_data_${selectedIndustry}`);
     if(savedRaw) {
         pptData[selectedIndustry] = JSON.parse(savedRaw);
     } else {
         pptData[selectedIndustry] = {};
-        for(let i=1; i<=8; i++) pptData[selectedIndustry][i] = { text: "", img: "" };
+        for(let i=1; i<=8; i++) pptData[selectedIndustry][i] = { text: "", img: "", imgAlign: "right" };
     }
 
     const inputs = document.getElementById('steps-inputs');
     inputs.innerHTML = '';
     slideStructure.forEach((s, index) => {
-        const slideD = pptData[selectedIndustry][s.id] || {text:"", img:""};
+        const slideD = pptData[selectedIndustry][s.id] || {text:"", img:"", imgAlign: "right"};
         const customQuestion = industries[name].questions[index]; 
         const commonPhrase = industries[name].phrases[index];
         
@@ -814,10 +832,16 @@ function startExercise(name) {
                 <textarea id="input-s${s.id}" onfocus="jumpToSlide(${s.id})" oninput="syncText(${s.id})" placeholder="👉 提示：請以【點列式】(Bullet points) 呈現資料，保持簡報清晰易讀。&#10;• 重點一...&#10;• 重點二...">${slideD.text}</textarea>
                 
                 <div class="upload-section no-print">
-                    <label class="img-upload-label">
-                        🖼️ 上載圖片 (可選)
-                        <input type="file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, ${s.id})">
-                    </label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="img-upload-label">
+                            🖼️ 上載圖片 (可選)
+                            <input type="file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, ${s.id})">
+                        </label>
+                        <select id="align-img-${s.id}" onchange="changeImgAlign(${s.id}, this.value)" style="display: ${slideD.img ? 'inline-block' : 'none'}; padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; cursor: pointer; color: var(--primary); font-weight: bold;">
+                            <option value="right" ${slideD.imgAlign !== 'left' ? 'selected' : ''}>➡️ 圖片居右</option>
+                            <option value="left" ${slideD.imgAlign === 'left' ? 'selected' : ''}>⬅️ 圖片居左</option>
+                        </select>
+                    </div>
                     <button class="remove-img-btn" id="remove-img-btn-${s.id}" onclick="removeImage(${s.id})" style="display: ${slideD.img ? 'inline-block' : 'none'};">🗑️ 移除圖片</button>
                 </div>
             </div>
@@ -835,8 +859,10 @@ function handleImageUpload(event, id) {
     
     const reader = new FileReader();
     reader.onload = function(e) {
+        if(!pptData[selectedIndustry][id].imgAlign) pptData[selectedIndustry][id].imgAlign = 'right';
         pptData[selectedIndustry][id].img = e.target.result;
         document.getElementById(`remove-img-btn-${id}`).style.display = 'inline-block';
+        document.getElementById(`align-img-${id}`).style.display = 'inline-block';
         if (currentSlide === id) updateUI();
     };
     reader.readAsDataURL(file);
@@ -845,6 +871,12 @@ function handleImageUpload(event, id) {
 function removeImage(id) {
     pptData[selectedIndustry][id].img = "";
     document.getElementById(`remove-img-btn-${id}`).style.display = 'none';
+    document.getElementById(`align-img-${id}`).style.display = 'none';
+    if (currentSlide === id) updateUI();
+}
+
+function changeImgAlign(id, value) {
+    pptData[selectedIndustry][id].imgAlign = value;
     if (currentSlide === id) updateUI();
 }
 
@@ -864,18 +896,27 @@ function updateUI() {
     preview.className = `slide-container ${style}`;
     
     const step = slideStructure[currentSlide - 1];
-    const sData = pptData[selectedIndustry][currentSlide] || {text:"", img:""};
+    const sData = pptData[selectedIndustry][currentSlide] || {text:"", img:"", imgAlign: "right"};
     
     document.getElementById('ppt-title').innerText = step.slide;
     document.getElementById('ppt-content').innerText = sData.text;
     
     const imgEl = document.getElementById('ppt-img-preview');
+    const bodyWrapper = document.getElementById('ppt-body-wrapper');
+    
     if(sData.img) {
         imgEl.src = sData.img;
         imgEl.style.display = 'block';
+        // 根據選擇設定圖片在左還是右
+        if(sData.imgAlign === 'left') {
+            bodyWrapper.style.flexDirection = 'row-reverse';
+        } else {
+            bodyWrapper.style.flexDirection = 'row';
+        }
     } else {
         imgEl.src = "";
         imgEl.style.display = 'none';
+        bodyWrapper.style.flexDirection = 'row';
     }
     
     document.getElementById('slide-index').innerText = `${currentSlide} / 8`;
@@ -922,11 +963,25 @@ function showProfessions() {
 }
 
 function askUnlock() {
-    const pw = prompt("請輸入教師解鎖密碼 (IVELC)：");
+    const pw = prompt("請輸入教師解鎖密碼：");
     if(pw === "IVELC") {
         document.getElementById('modal-title').innerText = `🎓 ${selectedIndustry} - 教師口頭報告引導`;
-        const formattedDemo = industries[selectedIndustry].phrases.join('<br><br>');
-        document.getElementById('modal-body').innerHTML = `<div style="white-space: normal;">${formattedDemo}</div>`;
+        
+        // 加入顏色標記說明
+        const legendHTML = `
+            <div style="margin-bottom: 20px; padding: 15px; background: #f8fafd; border-radius: 8px; border-left: 4px solid #f39c12; font-size: 15px; line-height: 1.8;">
+                <strong>🎨 顏色標記說明：</strong><br>
+                <span style="color:#d35400; font-weight:bold;">● 活動目的</span> |
+                <span style="color:#c0392b; font-weight:bold;">● 需要關注的三個方面</span> |
+                <span style="color:#27ae60; font-weight:bold;">● 員工的專業資格或專長</span><br>
+                <span style="color:#8e2de2; font-weight:bold;">● 發揮才能</span> |
+                <span style="color:#2980b9; font-weight:bold;">● 活動成效</span>
+            </div>
+        `;
+        
+        const demoContent = industries[selectedIndustry].demoHTML;
+        
+        document.getElementById('modal-body').innerHTML = legendHTML + `<div style="white-space: normal; line-height: 1.8; font-size: 16.5px; color: #333;">${demoContent}</div>`;
         document.getElementById('modal-box').style.display = 'flex';
     } else if(pw !== null) {
         alert("密碼不正確，請向老師查詢解鎖密碼！");
@@ -939,13 +994,14 @@ function generateFinal() {
     const style = document.getElementById('theme-style').value;
 
     slideStructure.forEach(s => {
-        const sData = pptData[selectedIndustry][s.id] || {text:"", img:""};
+        const sData = pptData[selectedIndustry][s.id] || {text:"", img:"", imgAlign:"right"};
+        let flexDir = sData.imgAlign === 'left' ? 'row-reverse' : 'row';
         let imgHtml = sData.img ? `<img src="${sData.img}" class="slide-uploaded-img" style="display:block;">` : '';
         
         gallery.innerHTML += `
             <div class="slide-container ${style}" style="box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 8px;">
                 <div class="slide-title">${s.slide}</div>
-                <div class="slide-body-wrapper">
+                <div class="slide-body-wrapper" style="flex-direction: ${flexDir};">
                     <div class="slide-content">${sData.text || ""}</div>
                     ${imgHtml}
                 </div>
@@ -968,7 +1024,7 @@ function exportPPTX() {
     const themeColor = document.getElementById('theme-color').value;
 
     slideStructure.forEach(s => {
-        const sData = pptData[selectedIndustry][s.id] || {text:"", img:""};
+        const sData = pptData[selectedIndustry][s.id] || {text:"", img:"", imgAlign:"right"};
         
         let slide = pres.addSlide();
         
@@ -984,17 +1040,31 @@ function exportPPTX() {
         });
         
         if (sData.img) {
-            slide.addText(sData.text, { 
-                x: 0.5, y: 1.5, w: '45%', h: '75%', 
-                fontSize: 18, color: '333333', valign: 'top', align: 'left'
-            });
-            
-            slide.addImage({ 
-                data: sData.img, 
-                x: 5.5, y: 1.5, w: 4, h: '75%', 
-                sizing: { type: 'contain', w: 4, h: 4 } 
-            });
+            if (sData.imgAlign === 'left') {
+                // 圖片在左，文字在右
+                slide.addImage({ 
+                    data: sData.img, 
+                    x: 0.5, y: 1.5, w: 4, h: '75%', 
+                    sizing: { type: 'contain', w: 4, h: 4 } 
+                });
+                slide.addText(sData.text, { 
+                    x: 5.0, y: 1.5, w: '45%', h: '75%', 
+                    fontSize: 18, color: '333333', valign: 'top', align: 'left'
+                });
+            } else {
+                // 圖片在右，文字在左
+                slide.addText(sData.text, { 
+                    x: 0.5, y: 1.5, w: '45%', h: '75%', 
+                    fontSize: 18, color: '333333', valign: 'top', align: 'left'
+                });
+                slide.addImage({ 
+                    data: sData.img, 
+                    x: 5.5, y: 1.5, w: 4, h: '75%', 
+                    sizing: { type: 'contain', w: 4, h: 4 } 
+                });
+            }
         } else {
+            // 滿版文字
             slide.addText(sData.text, { 
                 x: 0.5, y: 1.5, w: '90%', h: '75%', 
                 fontSize: 18, color: '333333', valign: 'top', align: 'left'
